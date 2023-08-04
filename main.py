@@ -68,16 +68,18 @@ def get_property_from_file(file_path, key_name):
         
         return data
 
-def build_instance(tag, no_dxp):
-    file_properties_path = 'app.server.version.properties'
+def is_tag_built(tag, file_properties_path):
     current_tag_version = None
-    
+
     try:
         current_tag_version = get_property_from_file(file_path=file_properties_path, key_name='app.server.version.tag')
     except:
         pass
 
-    if current_tag_version != tag:
+    return current_tag_version == tag
+
+def build_instance(tag, is_tag_built, file_properties_path, no_dxp):
+    if not is_tag_built:
         if not no_dxp:
             subprocess.run(['ant', 'setup-profile-dxp', '-S'], capture_output=True, check=True)
 
@@ -118,7 +120,7 @@ def get_repo_path(module_path):
     raise FileNotFoundError
 
 def main():
-    parser = argparse.ArgumentParser(prog='tarchia', description='A python script to update Liferay Site Initializers through Selenium', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(prog='tarchia', description='A python script to update Liferay Site Initializers', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('command', help='set the command to be used to build the Site Initializer project')
     parser.add_argument('module', help='set the Site Initializer project module path')
@@ -136,6 +138,7 @@ def main():
 
     args = parser.parse_args()
     file_properties_path = 'app.server.me.properties'
+    file_server_properties_path = 'app.server.version.properties'
 
     try:
         with alive_bar(file=sys.stderr, monitor=False, stats=False, calibrate=1, ctrl_c=True, spinner=None, receipt=False, dual_line=True) as bar:
@@ -150,6 +153,11 @@ def main():
             bar.title('Getting app.server.parent.dir value from ' + file_properties_path)
             home_path = get_property_from_file(file_path=file_properties_path, key_name='app.server.parent.dir')
             print('Liferay home found successfully: ' + home_path, file=sys.stdout)
+
+            bar()
+            bar.title('Checking if ' + args.tag + ' tag was already built')
+            is_built = is_tag_built(tag=args.tag, file_properties_path=file_server_properties_path)
+            print('Tag was already built' if is_built else "Tag reference not found", file=sys.stdout)
 
             bar()
             bar.title('Cleaning and updating repo')
@@ -173,7 +181,7 @@ def main():
 
             bar()
             bar.title('Building Liferay instance in ' + args.tag)
-            build_instance(tag=args.tag, no_dxp=args.no_dxp)
+            build_instance(tag=args.tag, is_tag_built=is_built, file_properties_path=file_server_properties_path, no_dxp=args.no_dxp)
             print('Instance built successfully', file=sys.stdout)
 
             bar()
