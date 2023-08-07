@@ -17,7 +17,7 @@ def handle_called_process_error(cmd, stderr):
     cmd_string = ' '.join(cmd)
 
     if 'gradlew' in cmd_string:
-        if re.search('java.io.FileNotFoundException', stderr):
+        if re.search('java.io.FileNotFoundException', stderr if isinstance(stderr, str) else stderr.decode('utf-8')):
             return  f"\n{bold_text('error:')} gradlew update file wasn't found, maybe dependencies are missing or there is an update since last ant all.\n\nPlease try to run again."
 
     return f"\n{bold_text('error:')} unknown error, please create an issue with the follow pattern in: https://github.com/jairmedeiros/tarchia/issues/new.\n\n{bold_text('[Title]')}\nCalledProcessError during {cmd_string}\n\n{bold_text('[Description]')}\n#### cmd\n{cmd_string}\n\n#### stacktrace\n```\n{stderr.decode('utf-8')}```"
@@ -52,8 +52,8 @@ def build_project(command):
 
     subprocess.run([gradlew(), command], capture_output=True, check=True)
 
-def git_checkout_master():
-    subprocess.run(['git', 'checkout', 'master'], capture_output=True, check=True)
+def git_checkout_previous():
+    subprocess.run(['git', 'checkout', '-'], capture_output=True, check=True)
 
 def get_property_from_file(file_path, key_name):
     properties = Properties()
@@ -103,14 +103,20 @@ def clean_home_dir(exclude):
             else:
                 os.remove(item)
     
-def clean_master_repo(origin, file_path):
-    try:
-        subprocess.run(['git', 'checkout', 'master'], capture_output=True, check=True)
-    except:
-        subprocess.run(['git', 'checkout', '-b', 'master'], capture_output=True, check=True)
-
+def clean_master_repo(origin, file_path, is_ignore):
+    if not is_ignore:
+        try:
+            subprocess.run(['git', 'checkout', 'master'], capture_output=True, check=True)
+        except:
+            subprocess.run(['git', 'checkout', '-b', 'master'], capture_output=True, check=True)
+    
     subprocess.run(['git', 'fetch', origin, 'master'], capture_output=True, check=True)
-    subprocess.run(['git', 'reset', '--hard', origin + '/master'], capture_output=True, check=True)
+    
+    if is_ignore:
+        subprocess.run(['git', 'rebase', origin + '/master'], capture_output=True, check=True)
+    else:
+        subprocess.run(['git', 'reset', '--hard', origin + '/master'], capture_output=True, check=True)
+    
     subprocess.run(['git', 'clean', '.', '-dfx', '-e', file_path], capture_output=True, check=True)
 
 def get_repo_path(module_path):
@@ -126,6 +132,7 @@ def main():
     parser.add_argument('module', help='set the Site Initializer project module path')
 
     parser.add_argument('-f', '--force', action='store_true', help='ignore prompts during execution')
+    parser.add_argument('-i', '--ignore', action='store_true', help='ignore master reset process')
     parser.add_argument('-o', '--origin', default='upstream', help='set the git origin to fetch new changes from master branch')
     parser.add_argument('-t', '--tag', required=True, help='set tag of Liferay version (eg. 7.4.3.81-ga81)')
 
@@ -161,7 +168,7 @@ def main():
 
             bar()
             bar.title('Cleaning and updating repo')
-            clean_master_repo(origin=args.origin, file_path=file_properties_path)
+            clean_master_repo(origin=args.origin, file_path=file_properties_path, is_ignore=args.ignore)
             print('repo cleaned and updated successfully and master branch updated', file=sys.stdout)
 
             bar()
@@ -185,7 +192,7 @@ def main():
             print('Instance built successfully', file=sys.stdout)
 
             bar()
-            git_checkout_master()
+            git_checkout_previous()
             print(f'Changed {args.tag} tag to master branch', file=sys.stdout)
 
             bar()
