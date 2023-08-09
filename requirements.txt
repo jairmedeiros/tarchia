@@ -1,4 +1,2 @@
 jproperties==2.1.1
-pypager==3.0.1
-selenium==4.10.0
 alive-progress==3.1.4
