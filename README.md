@@ -33,7 +33,6 @@ options:
                         set the git origin to fetch new changes from master branch (default: upstream)
   -t TAG, --tag TAG     set tag of Liferay version (eg. 7.4.3.81-ga81) (default: None)
   --no-dxp              disable DXP profile setup before build Liferay instance (default: False)
-
 ```
 
 <h2>💻 Built with</h2>
