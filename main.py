@@ -128,7 +128,7 @@ def get_repo_path(module_path):
 def main():
     parser = argparse.ArgumentParser(prog='tarchia', description='A python script to update Liferay Site Initializers', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('command', help='set the command to be used to build the Site Initializer project')
+    parser.add_argument('command', choices=['deploy', 'forceDeploy'], help='set the command to be used to build the Site Initializer project')
     parser.add_argument('module', help='set the Site Initializer project module path')
 
     parser.add_argument('-i', '--ignore', action='store_true', help='ignore master reset process')
