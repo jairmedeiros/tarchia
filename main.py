@@ -131,7 +131,6 @@ def main():
     parser.add_argument('command', help='set the command to be used to build the Site Initializer project')
     parser.add_argument('module', help='set the Site Initializer project module path')
 
-    parser.add_argument('-f', '--force', action='store_true', help='ignore prompts during execution')
     parser.add_argument('-i', '--ignore', action='store_true', help='ignore master reset process')
     parser.add_argument('-o', '--origin', default='upstream', help='set the git origin to fetch new changes from master branch')
     parser.add_argument('-t', '--tag', required=True, help='set tag of Liferay version (eg. 7.4.3.81-ga81)')
