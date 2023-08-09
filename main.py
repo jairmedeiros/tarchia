@@ -1,4 +1,3 @@
-import time
 from jproperties import Properties
 from alive_progress import alive_bar
 
